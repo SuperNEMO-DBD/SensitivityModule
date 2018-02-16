@@ -47,16 +47,16 @@ void SensitivityModule::initialize(const datatools::properties& myConfig,
   hfile_->cd();
   tree_ = new TTree("Sensitivity","Sensitivity");
   tree_->SetDirectory(hfile_);
-  
+
   // Reconstructed quantities
-  
+
   // Standard cuts
   tree_->Branch("reco.passes_two_calorimeters",&sensitivity_.passes_two_calorimeters_);
   tree_->Branch("reco.passes_two_plus_calos",&sensitivity_.passes_two_plus_calos_);
   tree_->Branch("reco.passes_two_clusters",&sensitivity_.passes_two_clusters_);
   tree_->Branch("reco.passes_two_tracks",&sensitivity_.passes_two_tracks_);
   tree_->Branch("reco.passes_associated_calorimeters",&sensitivity_.passes_associated_calorimeters_);
-  
+
   // Some basic counts
   tree_->Branch("reco.calorimeter_hit_count",&sensitivity_.calorimeter_hit_count_);
   tree_->Branch("reco.cluster_count",&sensitivity_.cluster_count_);
@@ -64,13 +64,13 @@ void SensitivityModule::initialize(const datatools::properties& myConfig,
   tree_->Branch("reco.associated_track_count",&sensitivity_.associated_track_count_);
   tree_->Branch("reco.small_cluster_count",&sensitivity_.small_cluster_count_);
   tree_->Branch("reco.delayed_hit_count",&sensitivity_.delayed_hit_count_);
-  
+
   // Numbers of reconstructed particles
   tree_->Branch("reco.number_of_electrons",&sensitivity_.number_of_electrons_);
   tree_->Branch("reco.electron_charges",&sensitivity_.electron_charges_);
   tree_->Branch("reco.number_of_gammas",&sensitivity_.number_of_gammas_);
   tree_->Branch("reco.alpha_count",&sensitivity_.alpha_count_);
-  
+
   // Energies
   tree_->Branch("reco.total_calorimeter_energy",&sensitivity_.total_calorimeter_energy_);
   tree_->Branch("reco.higher_electron_energy",&sensitivity_.higher_electron_energy_);
@@ -78,11 +78,11 @@ void SensitivityModule::initialize(const datatools::properties& myConfig,
   tree_->Branch("reco.electron_energies",&sensitivity_.electron_energies_);
   tree_->Branch("reco.gamma_energies",&sensitivity_.gamma_energies_);
   tree_->Branch("reco.highest_gamma_energy",&sensitivity_.highest_gamma_energy_);
-  
+
   // Electron track lengths
   tree_->Branch("reco.electron_track_lengths",&sensitivity_.electron_track_lengths_);
   tree_->Branch("reco.electron_hit_counts",&sensitivity_.electron_hit_counts_);
-  
+
   // Vertex positions (max 2 tracks)
   tree_->Branch("reco.first_vertex_x",&sensitivity_.first_vertex_x_);
   tree_->Branch("reco.first_vertex_y",&sensitivity_.first_vertex_y_);
@@ -117,8 +117,9 @@ void SensitivityModule::initialize(const datatools::properties& myConfig,
   tree_->Branch("reco.alpha_proj_vertex_x",&sensitivity_.alpha_proj_vertex_x_); // vector
   tree_->Branch("reco.alpha_proj_vertex_y",&sensitivity_.alpha_proj_vertex_y_); // vector
   tree_->Branch("reco.alpha_proj_vertex_z",&sensitivity_.alpha_proj_vertex_z_); // vector
+  tree_->Branch("reco.alphas_from_foil",&sensitivity_.alphas_from_foil_);
   tree_->Branch("reco.edgemost_vertex",&sensitivity_.edgemost_vertex_);
-  
+
   // Topologies
   tree_->Branch("reco.topology_1e1gamma",&sensitivity_.topology_1e1gamma_);
   tree_->Branch("reco.topology_1e1alpha",&sensitivity_.topology_1e1alpha_);
@@ -126,7 +127,7 @@ void SensitivityModule::initialize(const datatools::properties& myConfig,
   tree_->Branch("reco.topology_2e",&sensitivity_.topology_2e_);
   tree_->Branch("reco.topology_1e",&sensitivity_.topology_1e_);
 
-  
+
   // Multi-track topology info
   tree_->Branch("reco.angle_between_tracks",&sensitivity_.angle_between_tracks_);
   tree_->Branch("reco.same_side_of_foil",&sensitivity_.same_side_of_foil_);
@@ -149,8 +150,8 @@ void SensitivityModule::initialize(const datatools::properties& myConfig,
   tree_->Branch("reco.alpha_track_length",&sensitivity_.alpha_track_length_);
   tree_->Branch("reco.proj_track_length_alpha",&sensitivity_.proj_track_length_alpha_);
   tree_->Branch("reco.alpha_crosses_foil",&sensitivity_.alpha_crosses_foil_);
-  
-  
+
+
   // Calorimeter positions
   tree_->Branch("reco.electron_hits_mainwall",&sensitivity_.electron_hits_mainwall_);
   tree_->Branch("reco.electron_hits_xwall",&sensitivity_.electron_hits_xwall_);
@@ -172,14 +173,14 @@ void SensitivityModule::initialize(const datatools::properties& myConfig,
   tree_->Branch("true.vertex_y",&sensitivity_.true_vertex_y_);
   tree_->Branch("true.vertex_z",&sensitivity_.true_vertex_z_);
 
-  
+
   this->_set_initialized(true);
 }
 //! [SensitivityModule::Process]
 dpp::base_module::process_status
 SensitivityModule::process(datatools::things& workItem) {
-  
-  
+
+
   // internal variables to mimic the ntuple variables, names are same but in camel case
   bool passesTwoCalorimeters=false;
   bool passesTwoPlusCalos=false;
@@ -248,6 +249,7 @@ SensitivityModule::process(datatools::things& workItem) {
   std::vector<double> electronProjTrackLengths;
   std::vector<int> electronHitCounts;
   std::vector<bool> electronsFromFoil;
+  std::vector<bool> alphasFromFoil;
 
   std::vector<int> electronCaloType; // will be translated to the vectors for each type at the end
   std::vector<int> gammaCaloType; // will be translated to the vectors for each type at the end
@@ -261,15 +263,15 @@ SensitivityModule::process(datatools::things& workItem) {
   std::vector<double>gammaVetoFraction;
 
   std::vector<double> trajClDelayedTime;
-  
+
   std::vector<TVector3> electronVertices;
   std::vector<TVector3> electronDirections;
   std::vector<TVector3> electronProjVertices;
   std::vector<TVector3> alphaVertices;
   std::vector<TVector3> alphaDirections;
   std::vector<TVector3> alphaProjVertices;
-  
-  
+
+
   double angleBetweenTracks;
   bool sameSideOfFoil=false;
   bool edgemostJoinedElectron=false;
@@ -279,8 +281,8 @@ SensitivityModule::process(datatools::things& workItem) {
   // Grab calibrated data bank
   // Calibrated data will only be present in reconstructed files,
   // so wrap in a try block
-  
-  
+
+
   try {
     const snemo::datamodel::calibrated_data& calData = workItem.get<snemo::datamodel::calibrated_data>("CD");
 
@@ -310,7 +312,7 @@ SensitivityModule::process(datatools::things& workItem) {
 
         }
       }
-    
+
       caloHitCount=nCalHitsOverLowLimit;
       if (nCalorimeterHits==2 && nCalHitsOverHighLimit>=1 && nCalHitsOverLowLimit==2)
         {
@@ -370,7 +372,7 @@ SensitivityModule::process(datatools::things& workItem) {
   try
   {
     const snemo::datamodel::particle_track_data& trackData = workItem.get<snemo::datamodel::particle_track_data>("PTD");
-    
+
     if (trackData.has_particles ())
     {
 
@@ -379,7 +381,7 @@ SensitivityModule::process(datatools::things& workItem) {
 
         snemo::datamodel::particle_track track=trackData.get_particle(iParticle);
         TrackDetails trackDetails(geometry_manager_, track);
-        
+
         // Populate info for gammas
         if (trackDetails.IsGamma())
         {
@@ -395,7 +397,7 @@ SensitivityModule::process(datatools::things& workItem) {
           InsertAt(trackDetails,gammaCandidateDetails,pos);
           continue;
         }
-        
+
         if (trackDetails.MakesTrack()) trackCount++;
         else continue;
 
@@ -409,14 +411,14 @@ SensitivityModule::process(datatools::things& workItem) {
 
         // Count the number of vertices on the foil
         if (trackDetails.HasFoilVertex())verticesOnFoil++;
-        
+
         // For all the tracks in the event, which one has its foilmost vertex nearest the tunnel/mountain
         // edge of the foil? We could use this to identify
         // Events so near the edge they can't make a 3-cell track
 
         double thisY = trackDetails.GetFoilmostVertexY();
         if (TMath::Abs(thisY) > TMath::Abs(edgemostVertex)) edgemostVertex = thisY;
-        
+
         // For electron candidates, we need to store the energies
         if (trackDetails.IsElectron())
         {
@@ -441,7 +443,7 @@ SensitivityModule::process(datatools::things& workItem) {
           InsertAt(trackDetails.GetProjectedTrackLength(),electronProjTrackLengths,pos);
           InsertAt(trackDetails.GetTrackerHitCount(),electronHitCounts,pos);
         }
-        
+
         // Now look for alpha candidates
         if (trackDetails.IsAlpha())
         {
@@ -454,6 +456,14 @@ SensitivityModule::process(datatools::things& workItem) {
           if (trackDetails.HasFoilVertex()) foilAlphaCount++;
           // Time of first delayed hit
           trajClDelayedTime.push_back(trackDetails.GetDelayTime());
+          // Sort the alpha times, largest first
+          std::sort (trajClDelayedTime.begin(), trajClDelayedTime.end());
+          std::reverse (trajClDelayedTime.begin(), trajClDelayedTime.end());
+          // Add time to ordered list of alpha delay times (highest first) and get where in the list it was added
+          int pos=InsertAndGetPosition(trackDetails.GetDelayTime(), trajClDelayedTime, true);
+          // And whether or not they are from the foil
+          InsertAt(trackDetails.HasFoilVertex(),alphasFromFoil,pos);
+
           delayedClusterHitCount = trackDetails.GetTrackerHitCount(); // This will get overwritten if there are 2+ alphas, is that really what we want?
         }
       } // end for each particle
@@ -475,17 +485,17 @@ SensitivityModule::process(datatools::things& workItem) {
     {
       is1electron = true;
     }
-    
+
     if (electronCandidates.size() ==1 && alphaCandidates.size() ==1 && trackCount==2)
     { // gammas allowed
       is1e1alpha = true;
     }
-    
+
 
     //---------------------------------------
     // Combined info for the topologies
     //---------------------------------------
-    
+
     // Calculate values for the 1e1alpha topology
     // Want to iterate over the tracks in the electronCandidate and alphaCandidate vectors
     if (is1e1alpha)
@@ -578,11 +588,11 @@ SensitivityModule::process(datatools::things& workItem) {
   highestGammaEnergy=0;
   if (gammaCandidates.size()>0) highestGammaEnergy=gammaEnergies.at(0);
 
-  
+
   // Initialise variables that might not otherwise get set
   // It does not restart the vector for each entry so we have to do that manually
   ResetVars();
-  
+
   // Cuts pass/fail
   sensitivity_.passes_two_calorimeters_ = passesTwoCalorimeters;
   sensitivity_.passes_two_plus_calos_ = passesTwoPlusCalos;
@@ -607,8 +617,8 @@ SensitivityModule::process(datatools::things& workItem) {
 
   // And the new vertex vectors - we can rely on these all being the same size of vectors as we populate them all together
 
-  
-  
+
+
   for (int i=0;i<electronVertices.size();i++)
   {
     sensitivity_.electron_vertex_x_.push_back(electronVertices.at(i).X());
@@ -634,7 +644,7 @@ SensitivityModule::process(datatools::things& workItem) {
     sensitivity_.alpha_dir_y_.push_back(alphaDirections.at(i).Y());
     sensitivity_.alpha_dir_z_.push_back(alphaDirections.at(i).Z());
   }
-  
+
   // Special vertex variables
   if (is2electron || is1e1alpha)
     // At the moment we only set these for these two topologies. This should possibly change
@@ -660,11 +670,11 @@ SensitivityModule::process(datatools::things& workItem) {
     sensitivity_.second_track_direction_x_= electronDirections.at(1).X();
     sensitivity_.second_track_direction_y_= electronDirections.at(1).Y();
     sensitivity_.second_track_direction_z_= electronDirections.at(1).Z();
-    
+
     sensitivity_.vertex_separation_= (electronVertices.at(0) - electronVertices.at(1)).Mag();
     sensitivity_.foil_projection_separation_= (electronProjVertices.at(0) - electronProjVertices.at(1)).Mag();
     sensitivity_.angle_between_tracks_= electronDirections.at(0).Angle(electronDirections.at(1));
-    
+
     double thisProjectionDistance=(electronVertices.at(1)-electronProjVertices.at(1)).Perp();
     if (thisProjectionDistance > projectionDistanceXY)projectionDistanceXY=thisProjectionDistance;
   }
@@ -684,17 +694,17 @@ SensitivityModule::process(datatools::things& workItem) {
     sensitivity_.second_track_direction_x_= alphaDirections.at(0).X();
     sensitivity_.second_track_direction_y_= alphaDirections.at(0).Y();
     sensitivity_.second_track_direction_z_= alphaDirections.at(0).Z();
-    
+
       // Some two-particle topology calculations
     sensitivity_.vertex_separation_=(electronVertices.at(0) - alphaVertices.at(0)).Mag();
     sensitivity_.foil_projection_separation_= (electronProjVertices.at(0) - alphaCandidateDetails.at(0).GetProjectedVertex()).Mag();
     sensitivity_.angle_between_tracks_= electronDirections.at(0).Angle(alphaDirections.at(0));
-    
+
     double thisProjectionDistance=(alphaVertices.at(0)-alphaProjVertices.at(0)).Perp();
     if (thisProjectionDistance > projectionDistanceXY)projectionDistanceXY=thisProjectionDistance;
 
   }
-  
+
   // Track direction
   if (is2electron || is1e1alpha) // This works in either case
     {
@@ -702,15 +712,16 @@ SensitivityModule::process(datatools::things& workItem) {
     }
   // Vertices
   sensitivity_.vertices_on_foil_=verticesOnFoil;
-  
-  
+
+
   sensitivity_.projection_distance_xy_=projectionDistanceXY;
   sensitivity_.foil_alpha_count_=foilAlphaCount;
+  sensitivity_.alphas_from_foil_=alphasFromFoil;
   sensitivity_.electrons_from_foil_=electronsFromFoil;
   sensitivity_.electron_track_lengths_=electronTrackLengths;
   sensitivity_.electron_hit_counts_=electronHitCounts;
-  
- 
+
+
   // Timing
   sensitivity_.calo_hit_time_separation_=TMath::Abs(timeDelay);
   sensitivity_.delayed_track_time_= &trajClDelayedTime;
@@ -727,7 +738,7 @@ SensitivityModule::process(datatools::things& workItem) {
   sensitivity_.topology_1e1alpha_=is1e1alpha;
   sensitivity_.topology_2e_=is2electron;
   sensitivity_.topology_1e_=is1electron;
-  
+
 
   // Calorimeter walls: fractions of energy in each and vector of booleans
   // to say whether there are any hits in that wall
@@ -749,7 +760,7 @@ SensitivityModule::process(datatools::things& workItem) {
   sensitivity_.alpha_count_=alphaCandidates.size();
   sensitivity_.delayed_cluster_hit_count_=delayedClusterHitCount;
   sensitivity_.delayed_hit_count_=delayedHitCount;
-  
+
   // Truth info, simulation only
   sensitivity_.true_highest_primary_energy_=higherTrueEnergy;
   sensitivity_.true_second_primary_energy_=lowerTrueEnergy;
@@ -759,9 +770,9 @@ SensitivityModule::process(datatools::things& workItem) {
   sensitivity_.true_vertex_x_=trueVertexX;
   sensitivity_.true_vertex_y_=trueVertexY;
   sensitivity_.true_vertex_z_=trueVertexZ;
-  
+
   tree_->Fill();
-  
+
   // MUST return a status, see ref dpp::processing_status_flags_type
   return dpp::base_module::PROCESS_OK;
 }
@@ -788,17 +799,17 @@ void SensitivityModule::CalculateProbabilities(double &internalProbability, doub
     }
     // Calculate internal probability: both particles emitted at the same time
     // so time between the calo hits should be Time of flight 1 - Time of flight 2
-  
+
   // Calculate external probability: one particle travels to foil then the other travels from foil
   // so time between the calo hits should be Time of flight  1 + Time of flight  2
   if (projected)
   {
     internalChiSquared = pow((internalEmissionTime[0] - internalEmissionTime[1]) ,2) / (twoParticles.at(0)->GetProjectedTimeVariance() + twoParticles.at(1)->GetProjectedTimeVariance()) ;
-    
+
     externalChiSquared=pow(( TMath::Abs(twoParticles.at(0)->GetTime()-twoParticles.at(1)->GetTime()) - (theoreticalTimeOfFlight[0]+theoreticalTimeOfFlight[1]) ),2)/ (twoParticles.at(0)->GetProjectedTimeVariance() + twoParticles.at(1)->GetProjectedTimeVariance()) ;
   }else
   {
-    
+
     internalChiSquared = pow((internalEmissionTime[0] - internalEmissionTime[1]) ,2) / (twoParticles.at(0)->GetTotalTimeVariance() + twoParticles.at(1)->GetTotalTimeVariance()) ;
     externalChiSquared=pow(( TMath::Abs(twoParticles.at(0)->GetTime()-twoParticles.at(1)->GetTime()) - (theoreticalTimeOfFlight[0]+theoreticalTimeOfFlight[1]) ),2)/(twoParticles.at(0)->GetTotalTimeVariance() + twoParticles.at(1)->GetTotalTimeVariance()) ;
   }
@@ -807,7 +818,7 @@ void SensitivityModule::CalculateProbabilities(double &internalProbability, doub
   internalProbability=this->ProbabilityFromChiSquared(internalChiSquared);
   externalProbability=this->ProbabilityFromChiSquared(externalChiSquared);
 }
-                             
+
 // Calculate probabilities for an internal (both particles from the foil) and external (calo 1 -> foil -> calo 2) topology
 void SensitivityModule::CalculateProbabilities(double &internalProbability, double &externalProbability, double *calorimeterEnergies,  double *betas, double *trackLengths, double *calorimeterTimes, double *totalTimeVariances )
 {
@@ -930,7 +941,7 @@ void SensitivityModule::ResetVars()
   sensitivity_.alpha_dir_x_.clear();
   sensitivity_.alpha_dir_y_.clear();
   sensitivity_.alpha_dir_z_.clear();
-  
+
   // And initialize the rest, what a drag
   sensitivity_.first_proj_vertex_y_ = -9999;
   sensitivity_.first_proj_vertex_z_ = -9999;
@@ -970,4 +981,3 @@ void SensitivityModule::reset() {
   this->_set_initialized(false);
 
 }
-
