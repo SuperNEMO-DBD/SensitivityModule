@@ -249,6 +249,7 @@ SensitivityModule::process(datatools::things& workItem) {
   std::vector<double> electronProjTrackLengths;
   std::vector<int> electronHitCounts;
   std::vector<bool> electronsFromFoil;
+  std::vector<int> alphaHitCounts;
   std::vector<bool> alphasFromFoil;
 
   std::vector<int> electronCaloType; // will be translated to the vectors for each type at the end
@@ -447,24 +448,22 @@ SensitivityModule::process(datatools::things& workItem) {
         // Now look for alpha candidates
         if (trackDetails.IsAlpha())
         {
-          alphaCandidates.push_back(track);
-          alphaCandidateDetails.push_back(trackDetails);
-          // Vertex and direction info
-          alphaVertices.push_back(trackDetails.GetFoilmostVertex());
-          alphaDirections.push_back(trackDetails.GetDirection());
-          alphaProjVertices.push_back(trackDetails.GetProjectedVertex());
-          if (trackDetails.HasFoilVertex()) foilAlphaCount++;
-          // Time of first delayed hit
-          trajClDelayedTime.push_back(trackDetails.GetDelayTime());
-          // Sort the alpha times, largest first
-          std::sort (trajClDelayedTime.begin(), trajClDelayedTime.end());
-          std::reverse (trajClDelayedTime.begin(), trajClDelayedTime.end());
-          // Add time to ordered list of alpha delay times (highest first) and get where in the list it was added
+          // Add delay time to ordered list of alpha times (highest first)
+          // and get where in the list it was added
           int pos=InsertAndGetPosition(trackDetails.GetDelayTime(), trajClDelayedTime, true);
+          // Now add rest of the properties to the list
+          // Vector of electron candidates is ordered
+          InsertAt(track,alphaCandidates,pos);
+          InsertAt(trackDetails,alphaCandidateDetails,pos);
+          // Vertex and direction info
+          InsertAt(trackDetails.GetFoilmostVertex(),alphaVertices,pos);
+          InsertAt(trackDetails.GetDirection(),alphaDirections,pos);
+          InsertAt(trackDetails.GetProjectedVertex(),alphaProjVertices,pos);
           // And whether or not they are from the foil
           InsertAt(trackDetails.HasFoilVertex(),alphasFromFoil,pos);
+          if (trackDetails.HasFoilVertex()) foilAlphaCount++;
 
-          delayedClusterHitCount = trackDetails.GetTrackerHitCount(); // This will get overwritten if there are 2+ alphas, is that really what we want?
+          InsertAt(trackDetails.GetTrackerHitCount(),alphaHitCounts,pos);
         }
       } // end for each particle
     } // end if has particles
@@ -717,6 +716,7 @@ SensitivityModule::process(datatools::things& workItem) {
   sensitivity_.projection_distance_xy_=projectionDistanceXY;
   sensitivity_.foil_alpha_count_=foilAlphaCount;
   sensitivity_.alphas_from_foil_=alphasFromFoil;
+  sensitivity_.delayed_cluster_hit_count_=alphaHitCounts;
   sensitivity_.electrons_from_foil_=electronsFromFoil;
   sensitivity_.electron_track_lengths_=electronTrackLengths;
   sensitivity_.electron_hit_counts_=electronHitCounts;
@@ -724,7 +724,7 @@ SensitivityModule::process(datatools::things& workItem) {
 
   // Timing
   sensitivity_.calo_hit_time_separation_=TMath::Abs(timeDelay);
-  sensitivity_.delayed_track_time_= &trajClDelayedTime;
+  sensitivity_.delayed_track_time_= trajClDelayedTime;
   sensitivity_.internal_probability_=internalProbability;
   sensitivity_.external_probability_=externalProbability;
   sensitivity_.foil_projected_internal_probability_=foilProjectedInternalProbability;
@@ -758,7 +758,6 @@ SensitivityModule::process(datatools::things& workItem) {
   sensitivity_.track_count_=trackCount;
   sensitivity_.associated_track_count_=electronCandidates.size();
   sensitivity_.alpha_count_=alphaCandidates.size();
-  sensitivity_.delayed_cluster_hit_count_=delayedClusterHitCount;
   sensitivity_.delayed_hit_count_=delayedHitCount;
 
   // Truth info, simulation only
