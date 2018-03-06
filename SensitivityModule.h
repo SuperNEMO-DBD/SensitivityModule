@@ -49,9 +49,10 @@ typedef struct SensitivityEventStorage{
   std::vector<double> electron_energies_;
   std::vector<int> electron_charges_;
   std::vector<double> gamma_energies_;
-  std::vector<double>* delayed_track_time_;
+  std::vector<double> delayed_track_time_;
   std::vector<double> electron_track_lengths_;
   std::vector<int> electron_hit_counts_;
+  std::vector<int> delayed_cluster_hit_count_;
 
 
   // Get vertex position of up to two tracks in mm
@@ -147,7 +148,6 @@ typedef struct SensitivityEventStorage{
   int delayed_hit_count_; // Number of delated tracker hits, regardless of whether they are tracked as alphas
   int alpha_count_; // How many reconstructed alphas (formed from one or more delayed hits)?
   int foil_alpha_count_; //How many reconstructed alphas (ie delayed hits) that we think have a vertex on the foil?
-  int delayed_cluster_hit_count_; //How many geiger hits in the alpha track
   int small_cluster_count_; // How many clusters with 2 hits?
   double highest_gamma_energy_; // Highest energy gamma
   double edgemost_vertex_; // Y position of the foil vertex nearest the side of the detector
