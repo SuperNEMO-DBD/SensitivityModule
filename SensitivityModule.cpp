@@ -448,33 +448,22 @@ SensitivityModule::process(datatools::things& workItem) {
         // Now look for alpha candidates
         if (trackDetails.IsAlpha())
         {
-          std::cout<<"---1. Is an alpha we are filling the variables----"<<std::endl;
           // Add delay time to ordered list of alpha times (highest first)
           // and get where in the list it was added
           int pos=InsertAndGetPosition(trackDetails.GetDelayTime(), trajClDelayedTime, true);
-          std::cout<<"---2. Added delay time to ordered list of alpha times----"<<std::endl;
           // Now add rest of the properties to the list
           // Vector of electron candidates is ordered
           InsertAt(track,alphaCandidates,pos);
-          std::cout<<"---3. Added alpha candidates----"<<std::endl;
           InsertAt(trackDetails,alphaCandidateDetails,pos);
-          std::cout<<"---4. Added alpha candidate details----"<<std::endl;
           // Vertex and direction info
           InsertAt(trackDetails.GetFoilmostVertex(),alphaVertices,pos);
-          std::cout<<"---5. Added alpha vertices----"<<std::endl;
           InsertAt(trackDetails.GetDirection(),alphaDirections,pos);
-          std::cout<<"---6. Added alpha direction----"<<std::endl;
           InsertAt(trackDetails.GetProjectedVertex(),alphaProjVertices,pos);
-          std::cout<<"---7. Added alpha projected vertices----"<<std::endl;
           // And whether or not they are from the foil
           InsertAt(trackDetails.HasFoilVertex(),alphasFromFoil,pos);
-          std::cout<<"---8. Added alpha foil vertex----"<<std::endl;
           if (trackDetails.HasFoilVertex()) foilAlphaCount++;
-          std::cout<<"---9. Added alpha foil count----"<<std::endl;
 
           InsertAt(trackDetails.GetTrackerHitCount(),alphaHitCounts,pos);
-          std::cout<<"---10. Added alpha hit counts----"<<std::endl;
-          std::cout<<"---11. End of is Alpha----"<<std::endl;
         }
       } // end for each particle
     } // end if has particles
@@ -727,7 +716,6 @@ SensitivityModule::process(datatools::things& workItem) {
   sensitivity_.projection_distance_xy_=projectionDistanceXY;
   sensitivity_.foil_alpha_count_=foilAlphaCount;
   sensitivity_.alphas_from_foil_=alphasFromFoil;
-  std::cout<<"---Filling delayed cluster hit count----"<<std::endl;
   sensitivity_.delayed_cluster_hit_count_=alphaHitCounts;
   sensitivity_.electrons_from_foil_=electronsFromFoil;
   sensitivity_.electron_track_lengths_=electronTrackLengths;
@@ -736,7 +724,6 @@ SensitivityModule::process(datatools::things& workItem) {
 
   // Timing
   sensitivity_.calo_hit_time_separation_=TMath::Abs(timeDelay);
-  std::cout<<"---Filling delayed track time----"<<std::endl;
   sensitivity_.delayed_track_time_= trajClDelayedTime;
   sensitivity_.internal_probability_=internalProbability;
   sensitivity_.external_probability_=externalProbability;
