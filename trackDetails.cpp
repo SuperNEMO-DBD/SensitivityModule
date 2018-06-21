@@ -322,10 +322,15 @@ bool TrackDetails::SetDirection()
     // which is which?
     foilmost_end = ((TMath::Abs(one_end.x()) < TMath::Abs(the_other_end.x())) ? one_end: the_other_end);
     outermost_end = ((TMath::Abs(one_end.x()) >= TMath::Abs(the_other_end.x())) ? one_end: the_other_end);
-    geomtools::vector_3d direction = the_shape.get_direction_on_curve(the_shape.get_first()); // Only the first stores the direction for a line track
-    int multiplier = (direction.x() * outermost_end.x() > 0)? 1: -1; // If the direction points the wrong way, reverse it
-    // This will always point inwards towards the foil
-    direction_.SetXYZ(direction.x() * multiplier, direction.y() * multiplier, direction.z() * multiplier);
+    try {
+      geomtools::vector_3d direction = the_shape.get_direction_on_curve(the_shape.get_first()); // Only the first stores the direction for a line track
+      
+      int multiplier = (direction.x() * outermost_end.x() > 0)? 1: -1; // If the direction points the wrong way, reverse it
+      // This will always point inwards towards the foil
+      direction_.SetXYZ(direction.x() * multiplier, direction.y() * multiplier, direction.z() * multiplier);
+    } catch (exception e) {
+      direction_.SetXYZ(0, 0 ,0); // Catch if you can't get the direction, which could happen with a zero length track
+    }
     if(foilmost_end.x() * outermost_end.x() < 0 && TMath::Abs(foilmost_end.x()) > FOIL_CELL_GAP){
       crossesFoil_=true;
     }
@@ -339,10 +344,14 @@ bool TrackDetails::SetDirection()
     foilmost_end = ((TMath::Abs(one_end.x()) < TMath::Abs(the_other_end.x())) ? one_end: the_other_end);
     outermost_end = ((TMath::Abs(one_end.x()) >= TMath::Abs(the_other_end.x())) ? one_end: the_other_end);
     
-    geomtools::vector_3d direction = the_shape.get_direction_on_curve(foilmost_end); // Not the same on a curve
-    int multiplier = (direction.x() * outermost_end.x() > 0)? 1: -1; // If the direction points the wrong way, reverse it
-    // This will also point in towards the foil. Is that misleading in the case of a track that curves towards the foil and then out again? Not a problem when looking for bb events, but would it be misleading in cases of tracks from the wires?
-    direction_.SetXYZ(direction.x() * multiplier, direction.y() * multiplier, direction.z() * multiplier);
+    try {
+      geomtools::vector_3d direction = the_shape.get_direction_on_curve(foilmost_end); // Not the same on a curve
+      int multiplier = (direction.x() * outermost_end.x() > 0)? 1: -1; // If the direction points the wrong way, reverse it
+      // This will also point in towards the foil. Is that misleading in the case of a track that curves towards the foil and then out again? Not a problem when looking for bb events, but would it be misleading in cases of tracks from the wires?
+      direction_.SetXYZ(direction.x() * multiplier, direction.y() * multiplier, direction.z() * multiplier);
+    } catch (exception e) {
+      direction_.SetXYZ(0, 0 ,0); // Catch if you can't get the direction, which could happen with a zero length track
+    }
   }// end helix track
   if(foilmost_end.x() * outermost_end.x() < 0 && TMath::Abs(foilmost_end.x()) > FOIL_CELL_GAP){
     crossesFoil_=true;
