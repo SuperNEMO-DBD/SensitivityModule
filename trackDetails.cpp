@@ -329,7 +329,7 @@ bool TrackDetails::SetDirection()
       // This will always point inwards towards the foil
       direction_.SetXYZ(direction.x() * multiplier, direction.y() * multiplier, direction.z() * multiplier);
     } catch (exception e) {
-      direction_.SetXYZ(0, 0 ,0); // Catch if you can't get the direction, which could happen with a zero length track
+      direction_.SetXYZ(-9999, -9999 ,-9999); // Catch if you can't get the direction, which could happen with a zero length track. Shouldn't set to 0,0,0 as that is a legit direction!
     }
     if(foilmost_end.x() * outermost_end.x() < 0 && TMath::Abs(foilmost_end.x()) > FOIL_CELL_GAP){
       crossesFoil_=true;
@@ -350,7 +350,7 @@ bool TrackDetails::SetDirection()
       // This will also point in towards the foil. Is that misleading in the case of a track that curves towards the foil and then out again? Not a problem when looking for bb events, but would it be misleading in cases of tracks from the wires?
       direction_.SetXYZ(direction.x() * multiplier, direction.y() * multiplier, direction.z() * multiplier);
     } catch (exception e) {
-      direction_.SetXYZ(0, 0 ,0); // Catch if you can't get the direction, which could happen with a zero length track
+      direction_.SetXYZ(-9999, -9999 ,-9999); // Catch if you can't get the direction, which could happen with a zero length track
     }
   }// end helix track
   if(foilmost_end.x() * outermost_end.x() < 0 && TMath::Abs(foilmost_end.x()) > FOIL_CELL_GAP){
