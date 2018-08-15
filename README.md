@@ -162,9 +162,17 @@ and lower electron energies.
 
 **reco.electron_vertex_x(y,z)** : Vector of the x(y,z) position of the foilmost vertex of each electron candidate in descending order of energy.  The x direction is Italy to France (foil is at x ~ 0). The y direction is horizontal, parallel to the foil, you can see it in top view (tunnel to mountain).  The z direction is vertical (0 in the middle).
 
+**reco.electron_vertex_diff_y** : Vector separation in y of the two highest energy electrons. The y direction is horizontal, parallel to the foil, you can see it in top view (tunnel to mountain). Unit is mm.
+
+**reco.electron_vertex_diff_z** : Vector separation in z of the two highest energy electrons. The z direction is vertical (0 in the middle). Unit is mm.
+
 **reco.electron_dir_x(y,z)** : Vector of the x(y,z) component of a unit vector in the initial direction of the electron track at its foilmost end, assuming it travels away from the foil. 1 vector entry for each electron candidate in descending order of energy.
 
 **reco.electron_proj_vertex_x(y,z)** : Vector of the x(y,z) component of where the track would intersect the foil, if projected back with a straight line in its initial direction (thus x should be 0 or negligible). In future, we should do helix projection. 1 vector entry for each electron candidate in descending order of energy.
+
+**reco.electron_proj_vertex_diff_y** : Projected vector separation in y of the two highest energy electrons. The y direction is horizontal, parallel to the foil, you can see it in top view (tunnel to mountain). Projection is as described above. Unit is mm.
+
+**reco.electron_proj_vertex_diff_z** : Projected vector separation in z of the two highest energy electrons. The z direction is vertical (0 in the middle). Projection is as described above. Unit is mm.
 
 **reco.alpha_vertex_x(y,z), reco.alpha_dir_x(y,z), reco.alpha_proj_vertex_x(y,z)** : As with the electron equivalents, but for alphas. In this case there is no energy ordering (we don't measure alphas' energy). It is anticipated that there will rarely be more than 1 entry in these vectors except in the case of misreconstruction.
 

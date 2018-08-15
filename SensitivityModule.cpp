@@ -101,6 +101,10 @@ void SensitivityModule::initialize(const datatools::properties& myConfig,
   tree_->Branch("reco.vertex_separation",&sensitivity_.vertex_separation_);
   tree_->Branch("reco.foil_projection_separation",&sensitivity_.foil_projection_separation_);
   tree_->Branch("reco.projection_distance_xy",&sensitivity_.projection_distance_xy_);
+  tree_->Branch("reco.electron_vertex_diff_y",&sensitivity_.electron_vertex_diff_y_);
+  tree_->Branch("reco.electron_vertex_diff_z",&sensitivity_.electron_vertex_diff_z_);
+  tree_->Branch("reco.electron_proj_vertex_diff_y",&sensitivity_.electron_proj_vertex_diff_y_);
+  tree_->Branch("reco.electron_proj_vertex_diff_z",&sensitivity_.electron_proj_vertex_diff_z_);
   tree_->Branch("reco.vertices_on_foil",&sensitivity_.vertices_on_foil_);
   tree_->Branch("reco.electrons_from_foil",&sensitivity_.electrons_from_foil_);
   tree_->Branch("reco.electron_vertex_x",&sensitivity_.electron_vertex_x_); // vector
@@ -692,6 +696,10 @@ SensitivityModule::process(datatools::things& workItem) {
     sensitivity_.second_track_direction_z_= electronDirections.at(1).Z();
 
     sensitivity_.vertex_separation_= (electronVertices.at(0) - electronVertices.at(1)).Mag();
+    sensitivity_.electron_vertex_diff_y_=TMath::Abs(electronVertices.at(0).Y() - electronVertices.at(1).Y());
+    sensitivity_.electron_vertex_diff_z_=TMath::Abs(electronVertices.at(0).Z() - electronVertices.at(1).Z());
+    sensitivity_.electron_proj_vertex_diff_y_=TMath::Abs(electronProjVertices.at(0).Y() - electronProjVertices.at(1).Y());
+    sensitivity_.electron_proj_vertex_diff_z_=TMath::Abs(electronProjVertices.at(0).Z() - electronProjVertices.at(1).Z());
     sensitivity_.foil_projection_separation_= (electronProjVertices.at(0) - electronProjVertices.at(1)).Mag();
     sensitivity_.angle_between_tracks_= electronDirections.at(0).Angle(electronDirections.at(1));
 
@@ -990,6 +998,10 @@ void SensitivityModule::ResetVars()
   sensitivity_.second_track_direction_z_= -9999;
   sensitivity_.vertex_separation_= -9999;
   sensitivity_.foil_projection_separation_= -9999;
+  sensitivity_.electron_vertex_diff_y_= -9999;
+  sensitivity_.electron_vertex_diff_z_= -9999;
+  sensitivity_.electron_proj_vertex_diff_y_= -9999;
+  sensitivity_.electron_proj_vertex_diff_z_= -9999;
   sensitivity_.angle_between_tracks_= -9999;
   sensitivity_.alpha_track_length_=-9999;
   sensitivity_.proj_track_length_alpha_=-9999;

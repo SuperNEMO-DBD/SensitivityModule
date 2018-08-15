@@ -75,6 +75,10 @@ typedef struct SensitivityEventStorage{
   double second_track_direction_x_;
   double second_track_direction_y_;
   double second_track_direction_z_;
+  double electron_vertex_diff_y_;
+  double electron_vertex_diff_z_;
+  double electron_proj_vertex_diff_y_;
+  double electron_proj_vertex_diff_z_;
 
 
   // While I will keep those for legacy (at least for now), also add vectors of electron vertices and directions
