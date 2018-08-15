@@ -73,9 +73,10 @@ void SensitivityModule::initialize(const datatools::properties& myConfig,
 
   // Energies
   tree_->Branch("reco.total_calorimeter_energy",&sensitivity_.total_calorimeter_energy_);
-  tree_->Branch("reco.sum_electron_energy",&sensitivity_.sum_electron_energy_);
   tree_->Branch("reco.higher_electron_energy",&sensitivity_.higher_electron_energy_);
   tree_->Branch("reco.lower_electron_energy",&sensitivity_.lower_electron_energy_);
+  tree_->Branch("reco.sum_electron_energy",&sensitivity_.sum_electron_energy_);
+  tree_->Branch("reco.diff_electron_energy",&sensitivity_.diff_electron_energy_);
   tree_->Branch("reco.electron_energies",&sensitivity_.electron_energies_);
   tree_->Branch("reco.gamma_energies",&sensitivity_.gamma_energies_);
   tree_->Branch("reco.highest_gamma_energy",&sensitivity_.highest_gamma_energy_);
@@ -194,6 +195,7 @@ SensitivityModule::process(datatools::things& workItem) {
   double higherElectronEnergy=0;
   double lowerElectronEnergy=0;
   double sumElectronEnergy=0;
+  double diffElectronEnergy=0;
   int verticesOnFoil=0;
   int firstVerticesOnFoil=0;
   double timeDelay=-1;
@@ -583,11 +585,13 @@ SensitivityModule::process(datatools::things& workItem) {
 
   higherElectronEnergy=0;
   lowerElectronEnergy=0;
-  sumElectronEnergy=0
+  sumElectronEnergy=0;
+  diffElectronEnergy=0;
   if (electronCandidates.size()>0) higherElectronEnergy=electronEnergies.at(0);
   if (electronCandidates.size()>1) lowerElectronEnergy=electronEnergies.at(1);
 
   sumElectronEnergy = higherElectronEnergy+lowerElectronEnergy;
+  diffElectronEnergy = TMath::Abs(higherElectronEnergy-lowerElectronEnergy);
 
   highestGammaEnergy=0;
   if (gammaCandidates.size()>0) highestGammaEnergy=gammaEnergies.at(0);
@@ -613,6 +617,7 @@ SensitivityModule::process(datatools::things& workItem) {
   sensitivity_.lower_electron_energy_=lowerElectronEnergy;
   sensitivity_.higher_electron_energy_=higherElectronEnergy;
   sensitivity_.sum_electron_energy_=sumElectronEnergy;
+  sensitivity_.diff_electron_energy_=diffElectronEnergy;
   sensitivity_.total_calorimeter_energy_ = totalCalorimeterEnergy;
 
   // "First" track is the higher energy one

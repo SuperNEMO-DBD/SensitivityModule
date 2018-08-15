@@ -117,6 +117,8 @@ filename_out : string[1] = "my_filename.root"
 **reco.sum_electron_energy** : Summed energy of the two highest electron candidates. In this case this is the sum of the two variables above, the higher
 and lower electron energies.
 
+**reco.diff_electron_energy** : Difference in energy of the two highest electron candidates. In this case this is the difference between the two variables: higher_electron_energy - lower_electron_energy.
+
 **reco.electron_energies** : Vector of all electron-candidate energies. In descending order of energy.
 
 **reco.gamma_energies** : Vector of all electron-candidate energies. In descending order of energy.
