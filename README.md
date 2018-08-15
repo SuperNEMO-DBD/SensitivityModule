@@ -37,7 +37,7 @@ $ make test
 Note: if you get a QT5 error, you may need to specify the QT5 path when you run the cmake line, as given by `brew --prefix qt5-base`. For example, you can run:
 ``` console
 $ cmake -DCMAKE_PREFIX_PATH="$(brew --prefix qt5-base);$(brew --prefix)" ..
-``` 
+```
 
 The build will create the `libSensitivityModule` shared library plus the example `flreconstruct` pipeline
 script `SensitivityModuleExample.conf`. Assuming that you have an `input.brio` file that contains
@@ -113,6 +113,9 @@ filename_out : string[1] = "my_filename.root"
 **reco.higher_electron_energy** : Energy of the highest-energy electron candidate, summed over all associated calorimeter hits (at the moment I don’t think more than 1 hit is allowed, but that could change in future). 0 if no electron candidates. Corresponds to ** reco.electron_energies[0].
 
 **reco.lower_electron_energy** : Energy of the second-highest-energy electron candidate, summed over all associated calorimeter hits (at the moment I don’t think more than 1 hit is allowed, but that could change in future). 0 if less than 2 electron candidates. Corresponds to reco.electron_energies[1].
+
+**reco.sum_electron_energy** : Summed energy of the two highest electron candidates. In this case this is the sum of the two variables above, the higher
+and lower electron energies.
 
 **reco.electron_energies** : Vector of all electron-candidate energies. In descending order of energy.
 
@@ -244,5 +247,3 @@ in the event. (1 - gamma, 3-electron, 47- alpha)
 
 **true.lower_particle_type** : The particle type (electron, gamma, positron) of the lowest energy particle
 in the event. (1 - gamma, 3-electron, 47- alpha)
-
-

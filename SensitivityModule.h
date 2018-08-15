@@ -44,7 +44,8 @@ typedef struct SensitivityEventStorage{
   double total_calorimeter_energy_;
 
   double lower_electron_energy_; // MeV
-  double higher_electron_energy_;// MeVir
+  double higher_electron_energy_;// MeV
+  double sum_electron_energy_;// MeV
 
   std::vector<double> electron_energies_;
   std::vector<int> electron_charges_;
