@@ -47,6 +47,8 @@ typedef struct SensitivityEventStorage{
   double higher_electron_energy_;// MeV
   double sum_electron_energy_;// MeV
   double diff_electron_energy_;// MeV
+  double higher_electron_track_length_; // mm
+  double lower_electron_track_length_; // mm
 
   std::vector<double> electron_energies_;
   std::vector<int> electron_charges_;

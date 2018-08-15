@@ -129,6 +129,10 @@ and lower electron energies.
 
 **reco.electron_track_lengths** : Vector of all electron-candidate track lengths in mm. In descending order of energy.
 
+**reco.higher_electron_track_length** : Track length of the electron candidate with the higher electron energy in mm.
+
+**reco.lower_electron_track_length** : Track length of the electron candidate with the second highest electron energy in mm.
+
 **reco.electron_hit_counts** : Vector of the number of tracker hits in the track for each electron candidate. In descending order of energy.
 
 

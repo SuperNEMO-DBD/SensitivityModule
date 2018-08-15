@@ -83,6 +83,8 @@ void SensitivityModule::initialize(const datatools::properties& myConfig,
 
   // Electron track lengths
   tree_->Branch("reco.electron_track_lengths",&sensitivity_.electron_track_lengths_);
+  tree_->Branch("reco.higher_electron_track_length", &sensitivity_.higher_electron_track_length_);
+  tree_->Branch("reco.lower_electron_track_length", &sensitivity_.lower_electron_track_length_);
   tree_->Branch("reco.electron_hit_counts",&sensitivity_.electron_hit_counts_);
 
   // Vertex positions (max 2 tracks)
@@ -196,6 +198,8 @@ SensitivityModule::process(datatools::things& workItem) {
   double lowerElectronEnergy=0;
   double sumElectronEnergy=0;
   double diffElectronEnergy=0;
+  double higherElectronLength=0;
+  double lowerElectronLength=0;
   int verticesOnFoil=0;
   int firstVerticesOnFoil=0;
   double timeDelay=-1;
@@ -587,8 +591,14 @@ SensitivityModule::process(datatools::things& workItem) {
   lowerElectronEnergy=0;
   sumElectronEnergy=0;
   diffElectronEnergy=0;
+  higherElectronLength=0;
+  lowerElectronLength=0;
+
   if (electronCandidates.size()>0) higherElectronEnergy=electronEnergies.at(0);
   if (electronCandidates.size()>1) lowerElectronEnergy=electronEnergies.at(1);
+
+  if (electronCandidates.size()>0) higherElectronLength=electronTrackLengths.at(0);
+  if (electronCandidates.size()>1) lowerElectronLength=electronTrackLengths.at(1);
 
   sumElectronEnergy = higherElectronEnergy+lowerElectronEnergy;
   diffElectronEnergy = TMath::Abs(higherElectronEnergy-lowerElectronEnergy);
@@ -730,6 +740,8 @@ SensitivityModule::process(datatools::things& workItem) {
   sensitivity_.delayed_cluster_hit_count_=alphaHitCounts;
   sensitivity_.electrons_from_foil_=electronsFromFoil;
   sensitivity_.electron_track_lengths_=electronTrackLengths;
+  sensitivity_.higher_electron_track_length_=higherElectronLength;
+  sensitivity_.lower_electron_track_length_=lowerElectronLength;
   sensitivity_.electron_hit_counts_=electronHitCounts;
 
 
