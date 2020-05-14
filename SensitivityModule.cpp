@@ -294,10 +294,10 @@ SensitivityModule::process(datatools::things& workItem) {
     int nCalHitsOverHighLimit=0;
     int nCalHitsOverLowLimit=0;
 
-    if (calData.has_calibrated_calorimeter_hits())
+    //if (calData.has_calibrated_calorimeter_hits())
       {
-        const snemo::datamodel::calibrated_data::calorimeter_hit_collection_type & calHits=calData.calibrated_calorimeter_hits();
-        for (snemo::datamodel::calibrated_data::calorimeter_hit_collection_type::const_iterator   iHit = calHits.begin(); iHit != calHits.end(); ++iHit) {
+        const snemo::datamodel::CalorimeterHitHdlCollection & calHits=calData.calorimeter_hits();
+        for (snemo::datamodel::CalorimeterHitHdlCollection::const_iterator   iHit = calHits.begin(); iHit != calHits.end(); ++iHit) {
           const snemo::datamodel::calibrated_calorimeter_hit & calHit = iHit->get();
           double energy=calHit.get_energy() ;
           totalCalorimeterEnergy += energy;
@@ -326,11 +326,11 @@ SensitivityModule::process(datatools::things& workItem) {
       {
         passesTwoPlusCalos=true;
       }
-      if (calData.has_calibrated_tracker_hits())
+      //if (calData.has_calibrated_tracker_hits())
       {
         // Count the delayed tracker hits by looping all the tracker hits and checking if they are delayed
-        const snemo::datamodel::calibrated_data::tracker_hit_collection_type& trackerHits = calData.calibrated_tracker_hits();
-        for (snemo::datamodel::calibrated_data::tracker_hit_collection_type::const_iterator   iHit = trackerHits.begin(); iHit != trackerHits.end(); ++iHit) {
+        const snemo::datamodel::TrackerHitHdlCollection& trackerHits = calData.tracker_hits();
+        for (snemo::datamodel::TrackerHitHdlCollection::const_iterator   iHit = trackerHits.begin(); iHit != trackerHits.end(); ++iHit) {
           const snemo::datamodel::calibrated_tracker_hit& hit = iHit->get();
           if (hit.is_delayed()) delayedHitCount++;
         }
@@ -346,15 +346,15 @@ SensitivityModule::process(datatools::things& workItem) {
   // We want two clusters of three cells
   try {
     const snemo::datamodel::tracker_clustering_data& clusterData = workItem.get<snemo::datamodel::tracker_clustering_data>("TCD");
-    if (clusterData.has_default_solution ()) // Looks as if there is a possibility of alternative solutions. Is it sufficient to use the default?
+    if (clusterData.has_default ()) // Looks as if there is a possibility of alternative solutions. Is it sufficient to use the default?
       {
-        snemo::datamodel::tracker_clustering_solution solution = clusterData.get_default_solution () ;
-        snemo::datamodel::tracker_clustering_solution::cluster_col_type clusters=solution.get_clusters();
-        for (snemo::datamodel::tracker_clustering_solution::cluster_col_type::const_iterator iCluster = clusters.begin();  iCluster != clusters.end(); ++ iCluster)
+        snemo::datamodel::tracker_clustering_solution solution = clusterData.get_default () ;
+        snemo::datamodel::TrackerClusterHdlCollection clusters=solution.get_clusters();
+        for (snemo::datamodel::TrackerClusterHdlCollection::const_iterator iCluster = clusters.begin();  iCluster != clusters.end(); ++ iCluster)
         {
           const snemo::datamodel::tracker_cluster & cluster = iCluster->get();
 
-          if (cluster.get_number_of_hits()>=minHitsInCluster) ++clusterCount;
+          if (cluster.size()>=minHitsInCluster) ++clusterCount;
             else ++smallClusterCount;
         }
       }
@@ -377,10 +377,10 @@ SensitivityModule::process(datatools::things& workItem) {
   {
     const snemo::datamodel::particle_track_data& trackData = workItem.get<snemo::datamodel::particle_track_data>("PTD");
     
-    if (trackData.has_particles ())
+    if (trackData.hasParticles ())
     {
 
-      for (uint iParticle=0;iParticle<trackData.get_number_of_particles();++iParticle)
+      for (uint iParticle=0;iParticle<trackData.numberOfParticles();++iParticle)
       {
 
         snemo::datamodel::particle_track track=trackData.get_particle(iParticle);
