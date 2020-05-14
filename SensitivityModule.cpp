@@ -380,10 +380,13 @@ SensitivityModule::process(datatools::things& workItem) {
     if (trackData.hasParticles ())
     {
 
-      for (uint iParticle=0;iParticle<trackData.numberOfParticles();++iParticle)
-      {
+      const snemo::datamodel::ParticleHdlCollection particles = trackData.particles();
+      for (snemo::datamodel::ParticleHdlCollection::const_iterator   iParticle = particles.begin(); iParticle != particles.end(); ++iParticle) {
+        const snemo::datamodel::particle_track& track = iParticle->get();
+  //    for (uint iParticle=0;iParticle<trackData.numberOfParticles();++iParticle)
+   //   {
 
-        snemo::datamodel::particle_track track=trackData.get_particle(iParticle);
+     //   snemo::datamodel::particle_track track=trackData.get_particle(iParticle);
         TrackDetails trackDetails(geometry_manager_, track);
         
         // Populate info for gammas
