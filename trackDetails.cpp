@@ -69,7 +69,7 @@ bool TrackDetails::Initialize()
   const snemo::datamodel::tracker_cluster & the_cluster = the_trajectory.get_cluster();
   
   // Number of hits and lengths of track
-  trackerHitCount_ = the_cluster.get_number_of_hits(); // Currently a track only contains 1 cluster
+  trackerHitCount_ = the_cluster.size(); // Currently a track only contains 1 cluster
   trackLength_ = the_trajectory.get_pattern().get_shape().get_length();
   
   // Get details about the vertex position
@@ -81,7 +81,14 @@ bool TrackDetails::Initialize()
   if (track_.get_charge()==snemo::datamodel::particle_track::UNDEFINED && !track_.has_associated_calorimeter_hits() && the_cluster.is_delayed()>0)
   {
     particleType_=ALPHA;
-    delayTime_ = (the_cluster.get_hit(0).get_delayed_time());
+    
+    const snemo::datamodel::TrackerHitHdlCollection& trackerHits = the_cluster.hits();
+    // iterate only once, we only want the first hit
+    for (snemo::datamodel::TrackerHitHdlCollection::const_iterator   iHit = trackerHits.begin(); iHit > trackerHits.begin(); ++iHit) {
+      const snemo::datamodel::calibrated_tracker_hit& a_delayed_gg_hit = iHit->get();
+      delayTime_ = (a_delayed_gg_hit.get_delayed_time());
+    }
+    
     return true;
   }
   // ELECTRON candidates are prompt and have an associated calorimeter hit. No charge requirement as yet
@@ -146,10 +153,9 @@ bool TrackDetails::GenerateAlphaProjections(TrackDetails *electronTrack)
   
   //want to store the vector position of the delayed hit
 
-  int noHits = the_cluster.get_number_of_hits();
-  for (int hitNumber=0; hitNumber < noHits; hitNumber++)
-  {
-      const snemo::datamodel::calibrated_tracker_hit &a_delayed_gg_hit = the_cluster.get_hit(hitNumber);
+  const snemo::datamodel::TrackerHitHdlCollection& trackerHits = the_cluster.hits();
+  for (snemo::datamodel::TrackerHitHdlCollection::const_iterator   iHit = trackerHits.begin(); iHit != trackerHits.end(); ++iHit) {
+    const snemo::datamodel::calibrated_tracker_hit& a_delayed_gg_hit = iHit->get();
       TVector3 delayedHitPos;
       delayedHitPos.SetXYZ(a_delayed_gg_hit.get_x(), a_delayed_gg_hit.get_y(), a_delayed_gg_hit.get_z());
       vertexPositionDelayedHit.push_back(delayedHitPos);
