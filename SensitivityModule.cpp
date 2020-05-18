@@ -558,6 +558,7 @@ SensitivityModule::process(datatools::things& workItem) {
           if (energy > higherTrueEnergy)
           {
             lowerTrueEnergy=higherTrueEnergy;
+            lowerTrueType=higherTrueType;
             higherTrueEnergy=energy;
             higherTrueType=type;
           }
