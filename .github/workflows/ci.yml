@@ -12,11 +12,14 @@ jobs:
     container:
       image: supernemo/falaise:latest
       options: --user snemo --workdir /home/snemo
+      env:
+        GITHUB_WORKSPACE: /home/snemo
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Test where we are
+      - name: Test how we are running
         run: |
           env
           ls -larth /
           which brew
+      - name: Checkout code
+        uses: actions/checkout@v2
+      
