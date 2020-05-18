@@ -11,9 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: supernemo/falaise:latest
-      options: --user snemo --workdir /home/snemo
-      env:
-        GITHUB_WORKSPACE: /home/snemo
+      options: --user 1001
     steps:
       - name: Test how we are running
         run: |
