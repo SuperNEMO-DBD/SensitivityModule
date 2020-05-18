@@ -18,6 +18,11 @@ jobs:
           env
           ls -larth /
           which brew
+          whoami
       - name: Checkout code
         uses: actions/checkout@v2
+      - name: Install Falaise@develop
+        run: |
+          brew unlink falaise
+          brew install falaise --HEAD --cc=gcc-7
       
