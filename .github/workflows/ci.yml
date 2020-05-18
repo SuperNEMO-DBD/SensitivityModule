@@ -11,6 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: supernemo/falaise:latest
+      env:
+        HOME: /home/snemo
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
