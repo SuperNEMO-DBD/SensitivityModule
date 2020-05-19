@@ -7,21 +7,18 @@ on:
     branches: [ master ]
 
 jobs:
-  falaise-centos7:
+  build-and-test:
     runs-on: ubuntu-latest
-    container:
-      image: supernemo/falaise:latest
-      options: --user 1001
     steps:
-      - name: Test how we are running
-        run: |
-          env
-          ls -larth /
-          which brew
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Install Falaise@develop
-        run: |
-          brew unlink falaise
-          brew install falaise --HEAD --cc=gcc-7
-      
+    # Manually pull/start image/container due to its permission/USER.
+    - name: Pull Falaise Docker Image
+      run: docker pull supernemo/falaise-centos7-base:develop
+    - name: Create Docker Container
+      run: docker run -itd --name builder -v $GITHUB_WORKSPACE:$GITHUB_WORKSPACE supernemo/falaise-centos7-base:develop 
+    # Now the actual builds...
+    - uses: actions/checkout@v2
+    - name: Check our environment
+      run: |
+        docker exec builder bash -c "env"
+        docker exec builder bash -c "pwd"
+        docker exec builder bash -c "ls -larth /"  
