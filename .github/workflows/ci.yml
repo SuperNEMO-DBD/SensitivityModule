@@ -21,4 +21,5 @@ jobs:
       run: |
         docker exec builder bash -c "env"
         docker exec builder bash -c "pwd"
-        docker exec builder bash -c "ls -larth /"  
+        docker exec builder bash -c "ls -larth /home/*"
+        docker exec builder bash -c "brew install falaise --HEAD --cc=gcc-7"  
