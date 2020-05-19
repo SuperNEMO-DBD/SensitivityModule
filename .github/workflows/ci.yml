@@ -1,8 +1,6 @@
 name: CI
 
 on:
-  push:
-    branches: [ master ]
   pull_request:
     branches: [ master ]
 
@@ -15,11 +13,14 @@ jobs:
       run: docker pull supernemo/falaise-centos7-base:develop
     - name: Create Docker Container
       run: docker run -itd --name builder -v $GITHUB_WORKSPACE:$GITHUB_WORKSPACE supernemo/falaise-centos7-base:develop 
-    # Now the actual builds...
+    - name: Install Falaise@HEAD
+      run: docker exec builder bash -c "brew install falaise --HEAD --cc=gcc-7"   
+    # Now the actual build...
     - uses: actions/checkout@v2
     - name: Check our environment
       run: |
-        docker exec builder bash -c "env"
-        docker exec builder bash -c "pwd"
-        docker exec builder bash -c "ls -larth /home/*"
-        docker exec builder bash -c "brew install falaise --HEAD --cc=gcc-7"  
+        docker exec builder bash -c "ls -larth $GITHUB_WORKSPACE"
+        docker exec builder bash -c "mkdir build"
+        docker exec builder bash -c "cd build && cmake $GITHUB_WORKSPACE && make"
+        
+        
