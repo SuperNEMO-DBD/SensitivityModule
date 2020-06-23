@@ -444,7 +444,7 @@ SensitivityModule::process(datatools::things& workItem) {
           // And we also want a vector of electron charges (they might be positrons)
           InsertAt(trackDetails.GetCharge(),electronCharges,pos);
           // And whether or not they are from the foil
-          InsertAt(trackDetails.HasTrackerVertex(),electronsFromFoil,pos);
+          InsertAt(trackDetails.HasFoilVertex(),electronsFromFoil,pos);
           // Vertices, directions, and vertices if projected back to foil
           InsertAt(trackDetails.GetFoilmostVertex(),electronVertices,pos);
           InsertAt(trackDetails.GetProjectedVertex(),electronProjVertices,pos);
