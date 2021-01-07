@@ -151,7 +151,7 @@ filename_out : string[1] = "my_filename.root"
 
 **reco.vertices_in_tracker** : Number of charged particle tracks with a vertex on the foil or on the wires (was `reco.vertices_on_foil`).
 
-**reco.electrons_from_foil** : Vector of booleans corresponding to the electron candidates in descending order of energy. True if the electron candidate has a vertex on the source foil, false if not.
+**reco.electrons_from_foil** : Vector of booleans corresponding to the electron candidates in descending order of energy. True if the electron candidate has a vertex on the source foil (only), false if not.
 
 **reco.electron_vertex_x(y,z)** : Vector of the x(y,z) position of the foilmost vertex of each electron candidate in descending order of energy.  The x direction is Italy to France (foil is at x ~ 0). The y direction is horizontal, parallel to the foil, you can see it in top view (tunnel to mountain).  The z direction is vertical (0 in the middle).
 
@@ -201,7 +201,7 @@ reco.foil_projected_external_probability** : As internal and external probabilit
 **reco.delayed_cluster_hit_count** : Number of hits in the delayed cluster. Used to determine the correct
 metric for calculating the alpha track and alpha projected track lengths
 
-**reco.foil_alpha_count** : Number of alphas with a vertex identified as being on the source foil
+**reco.foil_alpha_count** : Number of alphas with a vertex identified as being on the source foil (only)
 
 **reco.alpha_track_length** : Length in mm of the delayed track. This length is calculated in different ways depending on the number of hits in the delayed cluster. This is due to the way < 3 hit tracks are treated by alpha finder. More detail is provided in code comments.
 
