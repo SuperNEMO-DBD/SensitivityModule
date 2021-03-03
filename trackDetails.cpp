@@ -72,6 +72,12 @@ bool TrackDetails::Initialize()
   trackerHitCount_ = the_cluster.size(); // Currently a track only contains 1 cluster
   trackLength_ = the_trajectory.get_pattern().get_shape().get_length();
   
+  if (trackLength_ == 0.0)
+  {
+    particleType_= UNKNOWN;
+    return false;
+  }
+  
   // Get details about the vertex position
   vertexInTracker_ = SetFoilmostVertex();
   vertexOnFoil_ = SetFoilmostVertex();
