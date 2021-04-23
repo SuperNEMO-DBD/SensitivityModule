@@ -70,8 +70,8 @@ typedef struct SensitivityEventStorage{
   double second_track_direction_x_;
   double second_track_direction_y_;
   double second_track_direction_z_;
-  
-  
+
+
   // While I will keep those for legacy (at least for now), also add vectors of electron vertices and directions
   std::vector<double> electron_vertex_x_;
   std::vector<double> electron_vertex_y_;
@@ -91,8 +91,8 @@ typedef struct SensitivityEventStorage{
   std::vector<double> alpha_proj_vertex_x_;
   std::vector<double> alpha_proj_vertex_y_;
   std::vector<double> alpha_proj_vertex_z_;
-  
-  
+
+
   // Use these to estimate the vertex position if the vertex were on the foil (x=0)
   // We only need y and z values for these, as x will always be 0 by definition
   double first_proj_vertex_y_;
@@ -110,7 +110,7 @@ typedef struct SensitivityEventStorage{
   int foil_vertex_count_; // How many tracks included a vertex on the foil?
   int vertices_in_tracker_; // How many tracks included a vertex on the foil or on a wire?
   std::vector<bool> electrons_from_foil_; // For each electron, is the vertex on the foil?
-  
+
   // For calculating probability of an  internal/external topology
   double calo_hit_time_separation_;
   bool topology_2e_; // Does it have a 2-electron-like topology?
@@ -154,7 +154,7 @@ typedef struct SensitivityEventStorage{
   double alpha_track_length_; // Length of the alpha track in mm, different metrics for different numbers of delayed hits
   double proj_track_length_alpha_; // Length of the alpha track when projected back to the foil in mm
   bool alpha_crosses_foil_; // True if the alpha track crosses the foil (bug in alpha finder)
-  
+
   // Truth info - particle energies in MeV and primary vertex position
   double true_highest_primary_energy_;
   double true_second_primary_energy_;
@@ -164,7 +164,7 @@ typedef struct SensitivityEventStorage{
   double true_vertex_x_;
   double true_vertex_y_;
   double true_vertex_z_;
-  
+
 }sensitivityeventstorage;
 
 
