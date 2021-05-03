@@ -463,7 +463,7 @@ SensitivityModule::process(datatools::things& workItem) {
           alphaVertices.push_back(trackDetails.GetFoilmostVertex());
           alphaDirections.push_back(trackDetails.GetDirection());
           alphaProjVertices.push_back(trackDetails.GetProjectedVertex());
-          if (trackDetails.HasTrackerVertex()) foilAlphaCount++;
+          if (trackDetails.HasFoilVertex()) foilAlphaCount++;
           // Time of first delayed hit
           trajClDelayedTime.push_back(trackDetails.GetDelayTime());
           delayedClusterHitCount = trackDetails.GetTrackerHitCount(); // This will get overwritten if there are 2+ alphas, is that really what we want?
