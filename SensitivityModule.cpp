@@ -443,8 +443,8 @@ SensitivityModule::process(datatools::things& workItem) {
           InsertAt(trackDetails,electronCandidateDetails,pos);
           // And we also want a vector of electron charges (they might be positrons)
           InsertAt(trackDetails.GetCharge(),electronCharges,pos);
-          // And whether or not they are from the foil
-          InsertAt(trackDetails.HasTrackerVertex(),electronsFromFoil,pos);
+          // And if they are from the foil
+          InsertAt(trackDetails.HasFoilVertex(),electronsFromFoil,pos);
           // Vertices, directions, and vertices if projected back to foil
           InsertAt(trackDetails.GetFoilmostVertex(),electronVertices,pos);
           InsertAt(trackDetails.GetProjectedVertex(),electronProjVertices,pos);
@@ -463,7 +463,7 @@ SensitivityModule::process(datatools::things& workItem) {
           alphaVertices.push_back(trackDetails.GetFoilmostVertex());
           alphaDirections.push_back(trackDetails.GetDirection());
           alphaProjVertices.push_back(trackDetails.GetProjectedVertex());
-          if (trackDetails.HasTrackerVertex()) foilAlphaCount++;
+          if (trackDetails.HasFoilVertex()) foilAlphaCount++;
           // Time of first delayed hit
           trajClDelayedTime.push_back(trackDetails.GetDelayTime());
           delayedClusterHitCount = trackDetails.GetTrackerHitCount(); // This will get overwritten if there are 2+ alphas, is that really what we want?
