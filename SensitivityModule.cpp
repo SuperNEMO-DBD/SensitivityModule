@@ -97,7 +97,9 @@ void SensitivityModule::initialize(const datatools::properties& myConfig,
   tree_->Branch("reco.vertex_separation",&sensitivity_.vertex_separation_);
   tree_->Branch("reco.foil_projection_separation",&sensitivity_.foil_projection_separation_);
   tree_->Branch("reco.projection_distance_xy",&sensitivity_.projection_distance_xy_);
-  tree_->Branch("reco.vertices_on_foil",&sensitivity_.vertices_on_foil_);
+  tree_->Branch("reco.foil_vertex_count",&sensitivity_.foil_vertex_count_);
+  //tree_->Branch("reco.vertices_on_foil",&sensitivity_.vertices_on_foil_);
+  tree_->Branch("reco.vertices_in_tracker",&sensitivity_.vertices_in_tracker_);
   tree_->Branch("reco.electrons_from_foil",&sensitivity_.electrons_from_foil_);
   tree_->Branch("reco.electron_vertex_x",&sensitivity_.electron_vertex_x_); // vector
   tree_->Branch("reco.electron_vertex_y",&sensitivity_.electron_vertex_y_); // vector
@@ -193,6 +195,7 @@ SensitivityModule::process(datatools::things& workItem) {
   double higherElectronEnergy=0;
   double lowerElectronEnergy=0;
   int verticesOnFoil=0;
+  int verticesInTracker=0;
   int firstVerticesOnFoil=0;
   double timeDelay=-1;
   bool is2electron=false;
@@ -230,6 +233,7 @@ SensitivityModule::process(datatools::things& workItem) {
   double projectedTrackLengthAlpha=0;
   double maxAlphaTime=-1;
   int caloHitCount=0;
+  int foilVertexCount=0;
   double highestGammaEnergy=0;
   double edgemostVertex=0;
   double distanceBetweenFoilGeigerCell=30.838;
@@ -273,6 +277,9 @@ SensitivityModule::process(datatools::things& workItem) {
   std::vector<TVector3> alphaProjVertices;
 
 
+  TVector3 gammaDirection; // We are only calculating this for the highest-energy gamma right now
+  gammaDirection.SetXYZ(0,0,0);
+
   double angleBetweenTracks;
   bool sameSideOfFoil=false;
   bool edgemostJoinedElectron=false;
@@ -291,11 +298,16 @@ SensitivityModule::process(datatools::things& workItem) {
     int nCalHitsOverHighLimit=0;
     int nCalHitsOverLowLimit=0;
 
-    if (calData.has_calibrated_calorimeter_hits())
+    //if (calData.has_calibrated_calorimeter_hits())
       {
-        const snemo::datamodel::calibrated_data::calorimeter_hit_collection_type & calHits=calData.calibrated_calorimeter_hits();
-        for (snemo::datamodel::calibrated_data::calorimeter_hit_collection_type::const_iterator   iHit = calHits.begin(); iHit != calHits.end(); ++iHit) {
-          const snemo::datamodel::calibrated_calorimeter_hit & calHit = iHit->get();
+        #ifdef NEW_DATAMODEL_API
+        const snemo::datamodel::CalorimeterHitHdlCollection & calHits=calData.calorimeter_hits();
+        #else
+        const snemo::datamodel::calibrated_calorimeter_hit::collection_type& calHits = calData.calibrated_calorimeter_hits();
+        #endif
+
+        for (const auto& iHit : calHits) {
+          const snemo::datamodel::calibrated_calorimeter_hit & calHit = iHit.get();
           double energy=calHit.get_energy() ;
           totalCalorimeterEnergy += energy;
 
@@ -323,12 +335,17 @@ SensitivityModule::process(datatools::things& workItem) {
       {
         passesTwoPlusCalos=true;
       }
-      if (calData.has_calibrated_tracker_hits())
+      //if (calData.has_calibrated_tracker_hits())
       {
         // Count the delayed tracker hits by looping all the tracker hits and checking if they are delayed
-        const snemo::datamodel::calibrated_data::tracker_hit_collection_type& trackerHits = calData.calibrated_tracker_hits();
-        for (snemo::datamodel::calibrated_data::tracker_hit_collection_type::const_iterator   iHit = trackerHits.begin(); iHit != trackerHits.end(); ++iHit) {
-          const snemo::datamodel::calibrated_tracker_hit& hit = iHit->get();
+        #ifdef NEW_DATAMODEL_API
+        const snemo::datamodel::TrackerHitHdlCollection& trackerHits = calData.tracker_hits();
+        #else
+        const snemo::datamodel::calibrated_tracker_hit::collection_type& trackerHits = calData.calibrated_tracker_hits();
+        #endif
+
+        for (const auto& iHit : trackerHits) {
+          const snemo::datamodel::calibrated_tracker_hit& hit = iHit.get();
           if (hit.is_delayed()) delayedHitCount++;
         }
 
@@ -343,16 +360,39 @@ SensitivityModule::process(datatools::things& workItem) {
   // We want two clusters of three cells
   try {
     const snemo::datamodel::tracker_clustering_data& clusterData = workItem.get<snemo::datamodel::tracker_clustering_data>("TCD");
-    if (clusterData.has_default_solution ()) // Looks as if there is a possibility of alternative solutions. Is it sufficient to use the default?
-      {
-        snemo::datamodel::tracker_clustering_solution solution = clusterData.get_default_solution () ;
-        snemo::datamodel::tracker_clustering_solution::cluster_col_type clusters=solution.get_clusters();
-        for (snemo::datamodel::tracker_clustering_solution::cluster_col_type::const_iterator iCluster = clusters.begin();  iCluster != clusters.end(); ++ iCluster)
-        {
-          const snemo::datamodel::tracker_cluster & cluster = iCluster->get();
 
-          if (cluster.get_number_of_hits()>=minHitsInCluster) ++clusterCount;
-            else ++smallClusterCount;
+    #ifdef NEW_DATAMODEL_API
+    bool clusterHasDefaultSolution = clusterData.has_default();
+    #else
+    bool clusterHasDefaultSolution = clusterData.has_default_solution();
+    #endif
+
+    if (clusterHasDefaultSolution) // Looks as if there is a possibility of alternative solutions. Is it sufficient to use the default?
+      {
+        #ifdef NEW_DATAMODEL_API
+        snemo::datamodel::tracker_clustering_solution solution = clusterData.get_default() ;
+        const snemo::datamodel::TrackerClusterHdlCollection& clusters=solution.get_clusters();
+        #else
+        snemo::datamodel::tracker_clustering_solution solution = clusterData.get_default_solution();
+        const snemo::datamodel::tracker_clustering_solution::cluster_col_type& clusters = solution.get_clusters();
+        #endif
+
+        for (const auto& iCluster : clusters)
+        {
+          const snemo::datamodel::tracker_cluster & cluster = iCluster.get();
+
+          #ifdef NEW_DATAMODEL_API
+          bool hasAtLeastMinHits = (cluster.size() >= minHitsInCluster);
+          #else
+          bool hasAtLeastMinHits = (cluster.get_number_of_hits() >= minHitsInCluster);
+          #endif
+
+          if (hasAtLeastMinHits) {
+            ++clusterCount;
+          }
+          else {
+            ++smallClusterCount;
+          }
         }
       }
     if (clusterCount==2 )
@@ -374,13 +414,24 @@ SensitivityModule::process(datatools::things& workItem) {
   {
     const snemo::datamodel::particle_track_data& trackData = workItem.get<snemo::datamodel::particle_track_data>("PTD");
 
-    if (trackData.has_particles ())
+
+    #ifdef NEW_DATAMODEL_API
+    bool havePTDParticles = trackData.hasParticles();
+    #else
+    bool havePTDParticles = trackData.has_particles();
+    #endif
+
+    if (havePTDParticles)
     {
+      #ifdef NEW_DATAMODEL_API
+      const snemo::datamodel::ParticleHdlCollection& particles = trackData.particles();
+      #else
+      const snemo::datamodel::particle_track_data::particle_collection_type& particles = trackData.get_particles();
+      #endif
 
-      for (uint iParticle=0;iParticle<trackData.get_number_of_particles();++iParticle)
-      {
+      for (const auto& iParticle : particles) {
+        const snemo::datamodel::particle_track& track = iParticle.get();
 
-        snemo::datamodel::particle_track track=trackData.get_particle(iParticle);
         TrackDetails trackDetails(geometry_manager_, track);
 
         // Populate info for gammas
@@ -410,7 +461,10 @@ SensitivityModule::process(datatools::things& workItem) {
 
         // First the vertex:
 
-        // Count the number of vertices on the foil
+        // Count the number of vertices on the foil or on the wires (aka vertices in the tracker)
+        if (trackDetails.HasTrackerVertex())verticesInTracker++;
+
+        // Count the number of vertices on the foil only
         if (trackDetails.HasFoilVertex())verticesOnFoil++;
 
         // For all the tracks in the event, which one has its foilmost vertex nearest the tunnel/mountain
@@ -434,7 +488,7 @@ SensitivityModule::process(datatools::things& workItem) {
           InsertAt(trackDetails,electronCandidateDetails,pos);
           // And we also want a vector of electron charges (they might be positrons)
           InsertAt(trackDetails.GetCharge(),electronCharges,pos);
-          // And whether or not they are from the foil
+          // And whether or not they are from the foil only
           InsertAt(trackDetails.HasFoilVertex(),electronsFromFoil,pos);
           // Vertices, directions, and vertices if projected back to foil
           InsertAt(trackDetails.GetFoilmostVertex(),electronVertices,pos);
@@ -514,6 +568,7 @@ SensitivityModule::process(datatools::things& workItem) {
       {
         // Set the track length for the highest-energy gamma based on it sharing a vertex with the electron
         gammaCandidateDetails.at(0).GenerateGammaTrackLengths(&electronCandidateDetails.at(0));
+    gammaDirection=gammaCandidateDetails.at(0).GenerateGammaTrackDirection(&electronCandidateDetails.at(0));
         twoParticles.push_back(&gammaCandidateDetails.at(0));
       }
       if (is2electron) // Second particle is the second electron
@@ -554,6 +609,7 @@ SensitivityModule::process(datatools::things& workItem) {
           if (energy > higherTrueEnergy)
           {
             lowerTrueEnergy=higherTrueEnergy;
+            lowerTrueType=higherTrueType;
             higherTrueEnergy=energy;
             higherTrueType=type;
           }
@@ -678,6 +734,11 @@ SensitivityModule::process(datatools::things& workItem) {
     if (thisProjectionDistance > projectionDistanceXY)projectionDistanceXY=thisProjectionDistance;
   }
 
+  if(is1engamma && (gammaDirection.Mag()>0))
+  {
+    sensitivity_.angle_between_tracks_= electronDirections.at(0).Angle(gammaDirection);
+  }
+
   if(is1e1alpha)
   {
     sensitivity_.alpha_track_length_=alphaCandidateDetails.at(0).GetTrackLength();
@@ -710,9 +771,9 @@ SensitivityModule::process(datatools::things& workItem) {
       sensitivity_.same_side_of_foil_= ((sensitivity_.first_track_direction_x_ * sensitivity_.second_track_direction_x_) > 0); // X components both positive or both negative
     }
   // Vertices
-  sensitivity_.vertices_on_foil_=verticesOnFoil;
 
-
+  sensitivity_.foil_vertex_count_=verticesOnFoil;
+  sensitivity_.vertices_in_tracker_=verticesInTracker;
   sensitivity_.projection_distance_xy_=projectionDistanceXY;
   sensitivity_.foil_alpha_count_=foilAlphaCount;
   sensitivity_.alphas_from_foil_=alphasFromFoil;
@@ -945,8 +1006,6 @@ void SensitivityModule::ResetVars()
   sensitivity_.delayed_track_time_.clear();
   sensitivity_.alphas_from_foil_.clear();
   sensitivity_.delayed_cluster_hit_count_.clear();
-
-
 
   // And initialize the rest, what a drag
   sensitivity_.first_proj_vertex_y_ = -9999;

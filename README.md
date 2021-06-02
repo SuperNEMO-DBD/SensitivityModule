@@ -147,9 +147,11 @@ filename_out : string[1] = "my_filename.root"
 
 **reco.projection_distance_xy** : How far in the xy plane we had to project our longest-projected track. Proxy for how many cells we are claiming to have a track, but where we didn’t reconstruct a hit. Could be replaced by a mapping of broken cells etc.
 
-**reco.vertices_on_foil** : Number of charged particle tracks with a vertex on the foil.
+**reco.foil_vertex_count** : Number of charged particle tracks with a vertex on the foil.
 
-**reco.electrons_from_foil** : Vector of booleans corresponding to the electron candidates in descending order of energy. True if the electron candidate has a vertex on the source foil, false if not.
+**reco.vertices_in_tracker** : Number of charged particle tracks with a vertex on the foil or on the wires (was `reco.vertices_on_foil`).
+
+**reco.electrons_from_foil** : Vector of booleans corresponding to the electron candidates in descending order of energy. True if the electron candidate has a vertex on the source foil (only), false if not.
 
 **reco.electron_vertex_x(y,z)** : Vector of the x(y,z) position of the foilmost vertex of each electron candidate in descending order of energy.  The x direction is Italy to France (foil is at x ~ 0). The y direction is horizontal, parallel to the foil, you can see it in top view (tunnel to mountain).  The z direction is vertical (0 in the middle).
 
@@ -177,7 +179,7 @@ filename_out : string[1] = "my_filename.root"
 
 ## Output tuple structure - Multi-track topology info
 
-**reco.angle_between_tracks** : For 2-electron events: Angle between the initial momentum vectors of the two tracks. Does not require them to share a vertex (maybe it should). For 1-electron-n-gamma events, angle between the electron track and the highest-energy gamma “track”, if we assume that the gamma travels from the foil-most electron vertex to the centre of the calorimeter that it hits first.
+**reco.angle_between_tracks** : For 2-electron events: Angle between the initial momentum vectors of the two tracks. Does not require them to share a vertex (maybe it should). Similar for 1e-1 alpha. For 1-electron-n-gamma events, this calculates the angle between the electron track and the highest-energy gamma track associated to the electron vertex. The calculation will be rough as it will assume that the gamma impacts the centre of the optical module - the best we can do, as we have no tracking for gammas, is to assume a straight line from the electron vertex to the centre of the first activated calorimeter. It would be possible to estimate an uncertainty based on the geometry, if one felt so inclined, but this is not done.
 
 **reco.same_side_of_foil** : If 2 tracks: True if both tracks are on the same side of the foil, false if not
 
@@ -199,7 +201,7 @@ reco.foil_projected_external_probability** : As internal and external probabilit
 **reco.delayed_cluster_hit_count** : Number of hits in the delayed cluster. Used to determine the correct
 metric for calculating the alpha track and alpha projected track lengths
 
-**reco.foil_alpha_count** : Number of alphas with a vertex identified as being on the source foil
+**reco.foil_alpha_count** : Number of alphas with a vertex identified as being on the source foil (only)
 
 **reco.alpha_track_length** : Length in mm of the delayed track. This length is calculated in different ways depending on the number of hits in the delayed cluster. This is due to the way < 3 hit tracks are treated by alpha finder. More detail is provided in code comments.
 

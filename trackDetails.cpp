@@ -7,7 +7,7 @@ TrackDetails::TrackDetails()
 
 TrackDetails::TrackDetails(const geomtools::manager* geometry_manager, snemo::datamodel::particle_track track)
 {
-  
+
   foilmostVertex_.SetXYZ(-9999,-9999,-9999);
   direction_.SetXYZ(-9999,-9999,-9999);
   projectedVertex_.SetXYZ(-9999,-9999,-9999);
@@ -39,7 +39,7 @@ bool TrackDetails::Initialize()
       PopulateCaloHits();
       return true;
     } // end case neutral (gammas)
-    
+
     // Any of these will make a track
     case snemo::datamodel::particle_track::POSITIVE:
     case snemo::datamodel::particle_track::NEGATIVE:
@@ -52,14 +52,14 @@ bool TrackDetails::Initialize()
       return false;
     }
   }//end switch
-  
+
 
   if (!track_.has_trajectory())
   {
     particleType_=UNKNOWN;
     return false;
   }
-  
+
   // Now we have only charged particles remaining there are a few things we can do:
   // Identify electron candidates
   // Identify alpha candidates
@@ -67,20 +67,43 @@ bool TrackDetails::Initialize()
 
   const snemo::datamodel::tracker_trajectory & the_trajectory = track_.get_trajectory();
   const snemo::datamodel::tracker_cluster & the_cluster = the_trajectory.get_cluster();
-  
+
   // Number of hits and lengths of track
-  trackerHitCount_ = the_cluster.get_number_of_hits(); // Currently a track only contains 1 cluster
+  #ifdef NEW_DATAMODEL_API
+  trackerHitCount_ = the_cluster.size(); // Currently a track only contains 1 cluster
+  #else
+  trackerHitCount_ = the_cluster.get_number_of_hits();
+  #endif
   trackLength_ = the_trajectory.get_pattern().get_shape().get_length();
-  
+
+  if (trackLength_ == 0.0)
+  {
+    particleType_= UNKNOWN;
+    return false;
+  }
+
   // Get details about the vertex position
+  vertexInTracker_ = SetFoilmostVertex();
   vertexOnFoil_ = SetFoilmostVertex();
   if (SetDirection()) SetProjectedVertex(); // Can't project if no direction!
-  
+
   // ALPHA candidates are undefined charge particles associated with a delayed hit and no associated hit
   if (track_.get_charge()==snemo::datamodel::particle_track::UNDEFINED && !track_.has_associated_calorimeter_hits() && the_cluster.is_delayed()>0)
   {
     particleType_=ALPHA;
-    delayTime_ = (the_cluster.get_hit(0).get_delayed_time());
+
+    #ifdef NEW_DATAMODEL_API
+    const snemo::datamodel::TrackerHitHdlCollection& trackerHits = the_cluster.hits();
+    #else
+    const snemo::datamodel::calibrated_tracker_hit::collection_type& trackerHits = the_cluster.get_hits();
+    #endif
+
+    // iterate only once, we only want the first hit
+    for (const auto& iHit : trackerHits) {
+      const snemo::datamodel::calibrated_tracker_hit& a_delayed_gg_hit = iHit.get();
+      delayTime_ = (a_delayed_gg_hit.get_delayed_time());
+    }
+
     return true;
   }
   // ELECTRON candidates are prompt and have an associated calorimeter hit. No charge requirement as yet
@@ -91,8 +114,8 @@ bool TrackDetails::Initialize()
     PopulateCaloHits(); // As it has an associated hit, we can calculate the hit fractions
     return true;
   }
-  
-  
+
+
   return false; // Not an alpha or an electron, what could it be?
 } // end Initialize
 
@@ -116,6 +139,20 @@ double TrackDetails::GenerateGammaTrackLengths(TrackDetails *electronTrack)
   return trackLength_;
 }
 
+TVector3 TrackDetails::GenerateGammaTrackDirection(TrackDetails *electronTrack)
+{
+  // This assumes that the track is from the foilmost vertex of the electron
+  // to the calo that is hit earliest for the gamma
+  TVector3 failVector;
+  failVector.SetXYZ(0,0,0);
+  if (!IsGamma()) return failVector; // One gamma and one electron
+  if (!electronTrack->IsElectron()) return failVector;
+  if (foilmostVertex_.x()==-9999 || electronTrack->GetFoilmostVertexX()==-9999) return failVector; // They need real vertex positions
+  if (!vertexInTracker_) return failVector; // needs to share a vertex with an electron
+  direction_=(foilmostVertex_ - electronTrack->GetFoilmostVertex()).Unit();
+  return direction_;
+}
+
 bool TrackDetails::GenerateAlphaProjections(TrackDetails *electronTrack)
 {
   // In a 1e1alpha topology, we can recalculate projected track lengths
@@ -126,20 +163,23 @@ bool TrackDetails::GenerateAlphaProjections(TrackDetails *electronTrack)
   // We need to look at the hits in the alpha track, so get its associated cluster
   const snemo::datamodel::tracker_trajectory & the_trajectory = track_.get_trajectory();
   const snemo::datamodel::tracker_cluster & the_cluster = the_trajectory.get_cluster();
-  
-  std::vector<TVector3> vertexPositionDelayedHit;
-  
-  //want to store the vector position of the delayed hit
 
-  int noHits = the_cluster.get_number_of_hits();
-  for (int hitNumber=0; hitNumber < noHits; hitNumber++)
-  {
-      const snemo::datamodel::calibrated_tracker_hit &a_delayed_gg_hit = the_cluster.get_hit(hitNumber);
+  std::vector<TVector3> vertexPositionDelayedHit;
+
+  //want to store the vector position of the delayed hit
+  #ifdef NEW_DATAMODEL_API
+  const snemo::datamodel::TrackerHitHdlCollection& trackerHits = the_cluster.hits();
+  #else
+  const snemo::datamodel::calibrated_tracker_hit::collection_type& trackerHits = the_cluster.get_hits();
+  #endif
+
+  for (const auto& iHit : trackerHits) {
+    const snemo::datamodel::calibrated_tracker_hit& a_delayed_gg_hit = iHit.get();
       TVector3 delayedHitPos;
       delayedHitPos.SetXYZ(a_delayed_gg_hit.get_x(), a_delayed_gg_hit.get_y(), a_delayed_gg_hit.get_z());
       vertexPositionDelayedHit.push_back(delayedHitPos);
   }
-  
+
   // Here we want to examine the number of hits in the alpha, then find different alpha lengths for each category
   if(trackerHitCount_ == 1){
     //Alpha length will be the distance to the prompt track
@@ -169,7 +209,7 @@ bool TrackDetails::GenerateAlphaProjections(TrackDetails *electronTrack)
     projectedLength_ = (crossesFoil_) ? alphaTrackExtension:totalDistance;
     return true;
   }
-  
+
   return false; // Zero or negative tracker hit count for the alpha
 }
 
@@ -215,12 +255,12 @@ bool TrackDetails::PopulateCaloHits()
   // There could be multiple hits for a gamma so we need to add them up
   for (unsigned int hit=0; hit<track_.get_associated_calorimeter_hits().size();++hit)
   {
-    
+
     geomtools::vector_3d loc (0,0,0);
-    
+
     const snemo::datamodel::calibrated_calorimeter_hit & calo_hit = track_.get_associated_calorimeter_hits().at(hit).get();
     double thisHitEnergy=calo_hit.get_energy();
-    
+
     // Sum the energies
     thisEnergy +=  thisHitEnergy;
     energySigmaSq += calo_hit.get_sigma_energy()*calo_hit.get_sigma_energy(); // Add in quadrature
@@ -234,7 +274,7 @@ bool TrackDetails::PopulateCaloHits()
     else if (hitType==GVETO)
       thisVetoEnergy+= thisHitEnergy;
     else cout<<"WARNING: Unknown calorimeter type "<<hitType<<endl;
-    
+
     // Get the coordinates of the hit with the earliest time
     if (firstHitTime==-1 || calo_hit.get_time()<firstHitTime)
     {
@@ -271,10 +311,21 @@ bool TrackDetails::PopulateCaloHits()
   mainwallFraction_=thisMainWallEnergy/thisEnergy;
   xwallFraction_=thisXwallEnergy/thisEnergy;
   vetoFraction_=thisVetoEnergy/thisEnergy;
+
+  if (track_.has_vertices()) // There isn't any time ordering to the vertices so check them all
+  {
+    for (unsigned int iVertex=0; iVertex<track_.get_vertices().size();++iVertex)
+    {
+      const geomtools::blur_spot & vertex = track_.get_vertices().at(iVertex).get();
+      if (snemo::datamodel::particle_track::vertex_is_on_source_foil(vertex) || snemo::datamodel::particle_track::vertex_is_on_wire(vertex) )
+      {
+        vertexInTracker_ = true; // On wire OR foil - just not calo to calo gammas
+      }
+    }
+  }
+
   return true;
 }
-
-
 
 // Return true if vertex is on the foil
 // Populate the inner vertex
@@ -289,7 +340,7 @@ bool TrackDetails::SetFoilmostVertex()
     for (unsigned int iVertex=0; iVertex<track_.get_vertices().size();++iVertex)
     {
       const geomtools::blur_spot & vertex = track_.get_vertices().at(iVertex).get();
-      if (snemo::datamodel::particle_track::vertex_is_on_source_foil(vertex))
+      if (snemo::datamodel::particle_track::vertex_is_on_source_foil(vertex) )
       {
         hasVertexOnFoil = true;
       }
@@ -304,6 +355,7 @@ bool TrackDetails::SetFoilmostVertex()
   }
   return hasVertexOnFoil;
 }
+
 // Populates the direction_ vector with the direction of the track at the foilmost end
 // Returns true if you managed to set it, false if not
 bool TrackDetails::SetDirection()
@@ -313,7 +365,7 @@ bool TrackDetails::SetDirection()
   const snemo::datamodel::base_trajectory_pattern & the_base_pattern = track_.get_trajectory().get_pattern();
   geomtools::vector_3d foilmost_end;
   geomtools::vector_3d outermost_end;
-  
+
   if (the_base_pattern.get_pattern_id()=="line") {
     const geomtools::line_3d & the_shape = (const geomtools::line_3d&)the_base_pattern.get_shape();
     // Find the two ends of the track
@@ -338,7 +390,7 @@ bool TrackDetails::SetDirection()
     // which is which?
     foilmost_end = ((TMath::Abs(one_end.x()) < TMath::Abs(the_other_end.x())) ? one_end: the_other_end);
     outermost_end = ((TMath::Abs(one_end.x()) >= TMath::Abs(the_other_end.x())) ? one_end: the_other_end);
-    
+
     geomtools::vector_3d direction = the_shape.get_direction_on_curve(foilmost_end); // Not the same on a curve
     int multiplier = (direction.x() * outermost_end.x() > 0)? 1: -1; // If the direction points the wrong way, reverse it
     // This will also point in towards the foil. Is that misleading in the case of a track that curves towards the foil and then out again? Not a problem when looking for bb events, but would it be misleading in cases of tracks from the wires?
@@ -357,7 +409,7 @@ bool TrackDetails::SetProjectedVertex()
 {
   // Check that we have the necessary to do this calculation
   if (GetFoilmostVertexX()==-9999 || GetDirectionX()==-9999 || GetTrackLength()==0 || !hasTrack_) return false;
-  
+
   double scale=foilmostVertex_.X()/direction_.X();
   projectedVertex_=foilmostVertex_ - scale*direction_; // The second term is the extension to the track to project it back with a straight line
   projectedLength_=trackLength_+TMath::Abs(scale*(direction_).Mag());
@@ -372,7 +424,7 @@ bool TrackDetails::SetProjectedVertex()
 }
 
 
-  
+
 // Getters for the vertex information
 
 // Foilmost vertex
@@ -395,6 +447,10 @@ TVector3 TrackDetails::GetFoilmostVertex()
 bool TrackDetails::HasFoilVertex()
 {
   return vertexOnFoil_;
+}
+bool TrackDetails::HasTrackerVertex()
+{
+  return vertexInTracker_;  // was before vertexOnFoil_
 }
 // Foil-projected vertex
 double TrackDetails::GetProjectedVertexX()

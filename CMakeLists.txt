@@ -3,10 +3,24 @@
 # Declare project, which will configure compiler for us
 cmake_minimum_required(VERSION 3.3)
 project(SensitivityModule)
+
 find_package(Falaise REQUIRED)
+# - Workaround bug in CAMPConfig.cmake: it does not add its include path as a usage requirement
+set_target_properties(camp::camp PROPERTIES INTERFACE_INCLUDE_DIRECTORIES ${CAMP_INCLUDE_DIRS})
+
+# Check Falaise datamodel API, which changes between 4.0.x and develop
+try_compile(NEW_DATAMODEL_API ${CMAKE_BINARY_DIR} ${PROJECT_SOURCE_DIR}/testFalaiseAPI.cc
+  LINK_LIBRARIES Falaise::Falaise)
+set(__preamble "Checking for new Falaise API -")
+if(NEW_DATAMODEL_API)
+  message(STATUS "${__preamble} Success")
+else()
+  message(STATUS "${__preamble} Failed")
+endif()
 
 # Build a dynamic library from our sources
 add_library(SensitivityModule SHARED SensitivityModule.h SensitivityModule.cpp TrackDetails.h trackDetails.cpp)
+target_compile_definitions(SensitivityModule PRIVATE $<$<BOOL:${NEW_DATAMODEL_API}>:NEW_DATAMODEL_API>)
 
 # Link it to the FalaiseModule library
 # This ensures the correct compiler flags, include paths
